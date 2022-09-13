@@ -54,16 +54,18 @@ local function candybag_fn(inst)
         return
     end
 
-    if inst.components.equippable then
-        inst:RemoveComponent("equippable")
-        if inst.components.inventoryitem then
-            inst.components.inventoryitem.cangoincontainer = true
-            inst.components.inventoryitem:SetOnDroppedFn(ondropped)
-        end
-    end
-
     if inst.components.container then
         inst.components.container:WidgetSetup("candybag", candybag_data)
+        inst.components.container.skipclosesnd = true
+        inst.components.container.skipopensnd = true
+    end
+
+    if inst.components.inventoryitem then
+        inst.components.inventoryitem.cangoincontainer = true
+        inst.components.inventoryitem:SetOnDroppedFn(ondropped)
+        if inst.components.equippable then
+            inst:RemoveComponent("equippable")
+        end
     end
 end
 
