@@ -20,10 +20,10 @@ local candybag_data = {
         slotpos = {},
         animbank = "ui_krampusbag_2x8",
         animbuild = "ui_krampusbag_2x8",
-        pos = Vector3(-140, -120, 0)
+        pos = Vector3(-5, -120, 0)
     },
     issidewidget = true,
-    type = "bag",
+    type = "pack",
     openlimit = 1
 }
 
@@ -56,17 +56,56 @@ local function candybag_fn(inst)
 
     if inst.components.container then
         inst.components.container:WidgetSetup("candybag", candybag_data)
-        inst.components.container.skipclosesnd = true
-        inst.components.container.skipopensnd = true
     end
 
     if inst.components.inventoryitem then
         inst.components.inventoryitem.cangoincontainer = true
         inst.components.inventoryitem:SetOnDroppedFn(ondropped)
         if inst.components.equippable then
+            -- inst:AddTag("portable_bag")
             inst:RemoveComponent("equippable")
         end
     end
 end
 
 AddPrefabPostInit("candybag", candybag_fn)
+
+-- local function inventory_fn(Inventory)
+--     local oldGetNextAvailableSlot = Inventory.GetNextAvailableSlot
+--     function Inventory:GetNextAvailableSlot(item)
+--         local function find_portable_bag(val)
+--             return val:HasTag("portable_bag")
+--         end
+--         local portable_bags = self:FindItems(find_portable_bag)
+--         local overflow
+--         local retk
+--         if portable_bags ~= nil then
+--             for k, v in pairs(portable_bags) do
+--                 if
+--                     v.components.container ~= nil and v.components.container.canbeopened and
+--                         v.components.container:IsFull() == false and
+--                         v.components.container:ShouldPrioritizeContainer(item)
+--                  then
+--                     overflow = v.components.container
+--                     break
+--                 end
+--             end
+--             if overflow ~= nil then
+--                 for k = 1, overflow:GetNumSlots() do
+--                     if overflow:CanTakeItemInSlot(item, k) and not overflow.slots[k] then
+--                         retk = k
+--                         break
+--                     end
+--                 end
+--             end
+--         end
+
+--         if overflow ~= nil and retk ~= nil then
+--             return retk, overflow
+--         else
+--             return oldGetNextAvailableSlot(self, item)
+--         end
+--     end
+-- end
+
+-- AddComponentPostInit("inventory", inventory_fn)
