@@ -14,25 +14,7 @@ local function ondropped(inst)
     end
 end
 
---自定义糖果袋属性
-local candybag_data = {
-    widget = {
-        slotpos = {},
-        animbank = "ui_krampusbag_2x8",
-        animbuild = "ui_krampusbag_2x8",
-        pos = Vector3(-5, -120, 0)
-    },
-    issidewidget = true,
-    type = "pack",
-    openlimit = 1
-}
-
-for y = 0, 6 do
-    table.insert(candybag_data.widget.slotpos, Vector3(-162, -75 * y + 240, 0))
-    table.insert(candybag_data.widget.slotpos, Vector3(-162 + 75, -75 * y + 240, 0))
-end
-
-function candybag_data.itemtestfn(container, item, slot)
+local function candybag_item_fn(container, item, slot)
     local ret1 = GetModConfigData("冬季盛宴零食") and item:HasTag("wintersfeastfood")
     local ret2 = GetModConfigData("冬季盛宴装饰") and item:HasTag("winter_ornament")
     local ret3 =
@@ -46,6 +28,25 @@ function candybag_data.itemtestfn(container, item, slot)
         ret3
 end
 
+--自定义糖果袋属性
+local candybag_data = {
+    widget = {
+        slotpos = {},
+        animbank = "ui_krampusbag_2x8",
+        animbuild = "ui_krampusbag_2x8",
+        pos = Vector3(-140, -120, 0)
+    },
+    issidewidget = true,
+    type = "medal_box",
+    openlimit = 1
+}
+
+for y = 0, 6 do
+    table.insert(candybag_data.widget.slotpos, Vector3(-162, -75 * y + 240, 0))
+    table.insert(candybag_data.widget.slotpos, Vector3(-162 + 75, -75 * y + 240, 0))
+end
+
+candybag_data.itemtestfn = candybag_item_fn
 candybag_data.priorityfn = candybag_data.itemtestfn
 
 --糖果袋扩展逻辑
@@ -70,42 +71,72 @@ end
 
 AddPrefabPostInit("candybag", candybag_fn)
 
--- local function inventory_fn(Inventory)
---     local oldGetNextAvailableSlot = Inventory.GetNextAvailableSlot
---     function Inventory:GetNextAvailableSlot(item)
---         local function find_portable_bag(val)
---             return val:HasTag("portable_bag")
---         end
---         local portable_bags = self:FindItems(find_portable_bag)
---         local overflow
---         local retk
---         if portable_bags ~= nil then
---             for k, v in pairs(portable_bags) do
---                 if
---                     v.components.container ~= nil and v.components.container.canbeopened and
---                         v.components.container:IsFull() == false and
---                         v.components.container:ShouldPrioritizeContainer(item)
---                  then
---                     overflow = v.components.container
---                     break
---                 end
---             end
---             if overflow ~= nil then
---                 for k = 1, overflow:GetNumSlots() do
---                     if overflow:CanTakeItemInSlot(item, k) and not overflow.slots[k] then
---                         retk = k
---                         break
---                     end
---                 end
---             end
---         end
+--参考能力勋章(优先入盒)
+local function inventory_fn(self)
+    local oldGiveItem = self.GiveItem
+    self.GiveItem = function(self, inst, slot, src_pos)
+        if inst.components.inventoryitem == nil or not inst:IsValid() then
+            print("Warning: Can't give item because it's not an inventory item.")
+            return
+        end
 
---         if overflow ~= nil and retk ~= nil then
---             return retk, overflow
---         else
---             return oldGetNextAvailableSlot(self, item)
---         end
---     end
--- end
+        local eslot = self:IsItemEquipped(inst)
 
--- AddComponentPostInit("inventory", inventory_fn)
+        if eslot then
+            self:Unequip(eslot)
+        end
+
+        local new_item = inst ~= self.activeitem
+        if new_item then
+            for k, v in pairs(self.equipslots) do
+                if v == inst then
+                    new_item = false
+                    break
+                end
+            end
+        end
+
+        if inst.components.inventoryitem.owner and inst.components.inventoryitem.owner ~= self.inst then
+            inst.components.inventoryitem:RemoveFromOwner(true)
+        end
+
+        local objectDestroyed = inst.components.inventoryitem:OnPickup(self.inst, src_pos)
+        if objectDestroyed then
+            return
+        end
+
+        --模组容器
+        local portable_bag_container = nil
+        local portable_bag_name = nil
+
+        if not slot then --没有目标格子才需要执行优先入盒逻辑
+            --是否符合模组容器条件，选择模组容器
+            if candybag_item_fn(nil, inst, nil) then
+                portable_bag_name = "candybag"
+            end
+        end
+        --根据盒子名搜索玩家身上以及背包中合适的容器
+        if portable_bag_name then
+            local medal_boxs =
+                self:FindItems(
+                function(item)
+                    return item.prefab == portable_bag_name and item.components.container and
+                        item.components.container:IsFull() == false
+                end
+            )
+            if #medal_boxs > 0 then
+                for k, v in ipairs(medal_boxs) do
+                    portable_bag_container = v.components.container
+                    break
+                end
+            end
+        end
+        if portable_bag_container and portable_bag_container:GiveItem(inst, nil, src_pos) then
+            return true
+        end
+
+        return oldGiveItem and oldGiveItem(self, inst, slot, src_pos)
+    end
+end
+
+AddComponentPostInit("inventory", inventory_fn)
