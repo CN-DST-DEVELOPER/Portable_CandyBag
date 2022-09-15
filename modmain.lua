@@ -20,10 +20,10 @@ local function candybag_item_fn(container, item, slot)
     local ret2 = GetModConfigData("冬季盛宴装饰") and item:HasTag("winter_ornament")
     local ret3 =
         GetModConfigData("万圣节药剂") and
-        (string.sub(item.prefab, 1, 16) == "halloweenpotion_" or item.prefab == "livingtree_root")
+        (string.sub(item.prefab or "", 1, 16) == "halloweenpotion_" or item.prefab == "livingtree_root")
 
     return item:HasTag("halloweencandy") or item:HasTag("halloween_ornament") or
-        string.sub(item.prefab, 1, 8) == "trinket_" or
+        string.sub(item.prefab or "", 1, 8) == "trinket_" or
         ret1 or
         ret2 or
         ret3
@@ -74,7 +74,7 @@ AddPrefabPostInit("candybag", candybag_fn)
 
 ----------------------------------------------种子袋----------------------------------------------
 local function seedpouch_item_fn(container, item, slot)
-    return item.prefab == "seeds" or string.match(item.prefab, "_seeds") or item:HasTag("treeseed")
+    return item.prefab == "seeds" or string.match(item.prefab or "", "_seeds") or item:HasTag("treeseed")
 end
 
 --种子袋属性
@@ -169,20 +169,19 @@ local function inventory_fn(self)
         end
         --根据容器名搜索玩家身上以及背包中合适的容器
         if portable_bag_name then
-            local portable_bag =
-                self:FindItem(
+            local portable_bags =
+                self:FindItems(
                 function(item)
                     return item.prefab == portable_bag_name and item.components.container and
-                        item.components.container:IsOpen() and
                         item.components.container:IsFull() == false
                 end
             )
-            if portable_bag ~= nil then
-                portable_bag_container = portable_bag.components.container
+            if #portable_bags > 0 then
+                for k, v in ipairs(portable_bags) do
+                    portable_bag_container = v.components.container
+                    break
+                end
             end
-        end
-        if portable_bag_container and portable_bag_container:GiveItem(inst, nil, src_pos) then
-            return true
         end
 
         return oldGiveItem and oldGiveItem(self, inst, slot, src_pos)
