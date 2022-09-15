@@ -19,7 +19,7 @@ local function candybag_item_fn(container, item, slot)
     local ret1 = GetModConfigData("winter_food") and item:HasTag("wintersfeastfood")
     local ret2 = GetModConfigData("winter_ornament") and item:HasTag("winter_ornament")
     local ret3 =
-    GetModConfigData("halloween_potion") and
+        GetModConfigData("halloween_potion") and
         (string.sub(item.prefab or "", 1, 16) == "halloweenpotion_" or item.prefab == "livingtree_root")
 
     return item:HasTag("halloweencandy") or item:HasTag("halloween_ornament") or
@@ -78,7 +78,7 @@ local function seedpouch_item_fn(container, item, slot)
 end
 
 --种子袋属性
-local seedpouch_data = {
+seedpouch_data = {
     widget = {
         slotpos = {},
         animbank = "ui_krampusbag_2x8",
@@ -170,9 +170,10 @@ local function inventory_fn(self)
         --根据容器名搜索玩家身上以及背包中合适的容器
         if portable_bag_name then
             local portable_bags =
-            self:FindItems(
+                self:FindItems(
                 function(item)
                     return item.prefab == portable_bag_name and item.components.container and
+                        item.components.container:IsOpen() and
                         item.components.container:IsFull() == false
                 end
             )
@@ -182,6 +183,10 @@ local function inventory_fn(self)
                     break
                 end
             end
+        end
+
+        if portable_bag_container and portable_bag_container:GiveItem(inst, nil, src_pos) then
+            return true
         end
 
         return oldGiveItem and oldGiveItem(self, inst, slot, src_pos)
