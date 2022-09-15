@@ -169,18 +169,16 @@ local function inventory_fn(self)
         end
         --根据容器名搜索玩家身上以及背包中合适的容器
         if portable_bag_name then
-            local portable_bags =
-                self:FindItems(
+            local portable_bag =
+                self:FindItem(
                 function(item)
                     return item.prefab == portable_bag_name and item.components.container and
+                        item.components.container:IsOpen() and
                         item.components.container:IsFull() == false
                 end
             )
-            if #portable_bags > 0 then
-                for k, v in ipairs(portable_bags) do
-                    portable_bag_container = v.components.container
-                    break
-                end
+            if portable_bag ~= nil then
+                portable_bag_container = portable_bag.components.container
             end
         end
         if portable_bag_container and portable_bag_container:GiveItem(inst, nil, src_pos) then
