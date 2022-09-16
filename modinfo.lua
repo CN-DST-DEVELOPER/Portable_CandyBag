@@ -12,12 +12,11 @@ You may obtain a copy of the License at
 name = "便携糖果袋"
 author = "辰暮"
 description = [[
-为方便节日物品的拾取、储存、使用，糖果袋不再可装备，可以放在物品栏
-可设置是否装入冬季盛宴零食、冬季盛宴装饰、万圣节药剂
-种子袋已同步修改
-版本原因,不建议2022-09-11前的档开启
+为方便节日物品的拾取、储存、使用, 糖果袋不再可装备, 可以放在背包箱子等物品栏
+可设置是否能装入冬季盛宴零食、冬季盛宴装饰、万圣节药剂、糖豆
+种子袋已同样成为便携袋子
 ]]
-version = "1.0.0"
+version = "1.0.2"
 dst_compatible = true
 forge_compatible = false
 gorge_compatible = false
@@ -62,6 +61,17 @@ configuration_options = {
         options = {
             {data = true, description = "是", hover = "可装万圣节药剂"},
             {data = false, description = "否", hover = "不可装万圣节药剂"}
+        },
+        default = true
+    },
+    {
+        --GetModConfigData("jellybean")
+        name = "jellybean",
+        label = "糖豆",
+        hover = "糖果袋是否可装糖豆",
+        options = {
+            {data = true, description = "是", hover = "可装糖豆"},
+            {data = false, description = "否", hover = "不可装糖豆"}
         },
         default = true
     }

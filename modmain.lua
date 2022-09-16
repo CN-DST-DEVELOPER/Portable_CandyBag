@@ -21,12 +21,14 @@ local function candybag_item_fn(container, item, slot)
     local ret3 =
         GetModConfigData("halloween_potion") and
         (string.sub(item.prefab or "", 1, 16) == "halloweenpotion_" or item.prefab == "livingtree_root")
+    local ret4 = GetModConfigData("jellybean") and string.sub(item.prefab or "", 1, 9) == "jellybean"
 
     return item:HasTag("halloweencandy") or item:HasTag("halloween_ornament") or
         string.sub(item.prefab or "", 1, 8) == "trinket_" or
         ret1 or
         ret2 or
-        ret3
+        ret3 or
+        ret4
 end
 
 --糖果袋属性
@@ -130,22 +132,6 @@ local function inventory_fn(self)
             return
         end
 
-        local eslot = self:IsItemEquipped(inst)
-
-        if eslot then
-            self:Unequip(eslot)
-        end
-
-        local new_item = inst ~= self.activeitem
-        if new_item then
-            for k, v in pairs(self.equipslots) do
-                if v == inst then
-                    new_item = false
-                    break
-                end
-            end
-        end
-
         if inst.components.inventoryitem.owner and inst.components.inventoryitem.owner ~= self.inst then
             inst.components.inventoryitem:RemoveFromOwner(true)
         end
@@ -169,20 +155,15 @@ local function inventory_fn(self)
         end
         --根据容器名搜索玩家身上以及背包中合适的容器
         if portable_bag_name then
-            local portable_bags =
-                self:FindItems(
+            local portable_bag =
+                self:FindItem(
                 function(item)
                     return item.prefab == portable_bag_name and item.components.container and
                         item.components.container:IsOpen() and
                         item.components.container:IsFull() == false
                 end
             )
-            if #portable_bags > 0 then
-                for k, v in ipairs(portable_bags) do
-                    portable_bag_container = v.components.container
-                    break
-                end
-            end
+            portable_bag_container = portable_bag and portable_bag.components.container
         end
 
         if portable_bag_container and portable_bag_container:GiveItem(inst, nil, src_pos) then
