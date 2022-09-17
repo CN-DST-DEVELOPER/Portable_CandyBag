@@ -80,7 +80,7 @@ local function seedpouch_item_fn(container, item, slot)
 end
 
 --种子袋属性
-seedpouch_data = {
+local seedpouch_data = {
     widget = {
         slotpos = {},
         animbank = "ui_krampusbag_2x8",
@@ -132,42 +132,42 @@ local function inventory_fn(self)
             return
         end
 
-        if inst.components.inventoryitem.owner and inst.components.inventoryitem.owner ~= self.inst then
-            inst.components.inventoryitem:RemoveFromOwner(true)
-        end
+        --没有目标格子，才需找到格子
+        if not slot then
+            local portable_bag_name = nil
 
-        local objectDestroyed = inst.components.inventoryitem:OnPickup(self.inst, src_pos)
-        if objectDestroyed then
-            return
-        end
-
-        --模组容器
-        local portable_bag_container = nil
-        local portable_bag_name = nil
-
-        if not slot then --没有目标格子才需要执行优先入盒逻辑
-            --是否符合模组容器条件，选择模组容器
             if candybag_item_fn(nil, inst, nil) then
                 portable_bag_name = "candybag"
             elseif seedpouch_item_fn(nil, inst, nil) then
                 portable_bag_name = "seedpouch"
             end
-        end
-        --根据容器名搜索玩家身上以及背包中合适的容器
-        if portable_bag_name then
-            local portable_bag =
-                self:FindItem(
-                function(item)
-                    return item.prefab == portable_bag_name and item.components.container and
-                        item.components.container:IsOpen() and
-                        item.components.container:IsFull() == false
-                end
-            )
-            portable_bag_container = portable_bag and portable_bag.components.container
-        end
 
-        if portable_bag_container and portable_bag_container:GiveItem(inst, nil, src_pos) then
-            return true
+            --符合某个模组容器条件，才找模组容器
+            if portable_bag_name then
+                if inst.components.inventoryitem.owner and inst.components.inventoryitem.owner ~= self.inst then
+                    inst.components.inventoryitem:RemoveFromOwner(true)
+                end
+
+                local objectDestroyed = inst.components.inventoryitem:OnPickup(self.inst, src_pos)
+                if objectDestroyed then
+                    return
+                end
+
+                --找到容器
+                local portable_bag =
+                    self:FindItem(
+                    function(item)
+                        return item.prefab == portable_bag_name and item.components.container and
+                            item.components.container:IsOpen() and
+                            item.components.container:IsFull() == false
+                    end
+                )
+
+                local portable_bag_container = portable_bag and portable_bag.components.container
+                if portable_bag_container and portable_bag_container:GiveItem(inst, nil, src_pos) then
+                    return true
+                end
+            end
         end
 
         return oldGiveItem and oldGiveItem(self, inst, slot, src_pos)
