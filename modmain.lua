@@ -9,7 +9,7 @@ GLOBAL.setmetatable(
 
 --丢下
 local function ondropped(inst)
-    if inst.components.container ~= nil then
+    if inst.components.container then
         inst.components.container:Close()
     end
 end
@@ -54,20 +54,24 @@ candybag_data.priorityfn = candybag_data.itemtestfn
 
 --糖果袋修改逻辑
 local function candybag_fn(inst)
-    if not GLOBAL.TheWorld.ismastersim then
-        return
-    end
+    if TheNet:GetIsServer() then
+        if inst.components.container then
+            inst.components.container:WidgetSetup("candybag", candybag_data)
+        end
 
-    if inst.components.container then
-        inst.components.container:WidgetSetup("candybag", candybag_data)
-    end
-
-    if inst.components.inventoryitem then
-        inst.components.inventoryitem.cangoincontainer = true
-        inst.components.inventoryitem:SetOnDroppedFn(ondropped)
-        if inst.components.equippable then
-            -- inst:AddTag("portable_bag")
-            inst:RemoveComponent("equippable")
+        if inst.components.inventoryitem then
+            inst.components.inventoryitem.cangoincontainer = true
+            inst.components.inventoryitem:SetOnDroppedFn(ondropped)
+            if inst.components.equippable then
+                -- inst:AddTag("portable_bag")
+                inst:RemoveComponent("equippable")
+            end
+        end
+    elseif TheNet:GetIsClient() then
+        inst.OnEntityReplicated = function(inst)
+            if inst.replica.container then
+                inst.replica.container:WidgetSetup("candybag", candybag_data)
+            end
         end
     end
 end
@@ -102,20 +106,24 @@ seedpouch_data.priorityfn = seedpouch_data.itemtestfn
 
 --种子袋修改逻辑
 local function seedpouch_fn(inst)
-    if not GLOBAL.TheWorld.ismastersim then
-        return
-    end
+    if TheNet:GetIsServer() then
+        if inst.components.container then
+            inst.components.container:WidgetSetup("seedpouch", seedpouch_data)
+        end
 
-    if inst.components.container then
-        inst.components.container:WidgetSetup("seedpouch", seedpouch_data)
-    end
-
-    if inst.components.inventoryitem then
-        inst.components.inventoryitem.cangoincontainer = true
-        inst.components.inventoryitem:SetOnDroppedFn(ondropped)
-        if inst.components.equippable then
-            -- inst:AddTag("portable_bag")
-            inst:RemoveComponent("equippable")
+        if inst.components.inventoryitem then
+            inst.components.inventoryitem.cangoincontainer = true
+            inst.components.inventoryitem:SetOnDroppedFn(ondropped)
+            if inst.components.equippable then
+                -- inst:AddTag("portable_bag")
+                inst:RemoveComponent("equippable")
+            end
+        end
+    elseif TheNet:GetIsClient() then
+        inst.OnEntityReplicated = function(inst)
+            if inst.replica.container then
+                inst.replica.container:WidgetSetup("seedpouch", seedpouch_data)
+            end
         end
     end
 end
@@ -158,8 +166,7 @@ local function inventory_fn(self)
                     self:FindItem(
                     function(item)
                         return item.prefab == portable_bag_name and item.components.container and
-                            item.components.container:IsOpen() and
-                            item.components.container:IsFull() == false
+                            item.components.container:IsOpen()
                     end
                 )
 
