@@ -11,12 +11,13 @@ You may obtain a copy of the License at
 --]]
 name = "便携糖果袋"
 author = "辰暮"
-description = [[
-为方便节日物品的拾取、储存、使用, 糖果袋不再可装备, 可以放在背包、箱子等通用物品栏
+description =
+    [[为了方便节日物品的拾取、储存、使用,糖果袋不再可装备
+袋子可以放在背包、箱子等通用物品栏,格子窗口UI独立布局
 可设置是否能装入冬季盛宴零食、冬季盛宴装饰、万圣节药剂、糖豆
 可设置种子袋也变为便携袋子
 ]]
-version = "1.0.5"
+version = "1.0.6"
 dst_compatible = true
 forge_compatible = false
 gorge_compatible = false
