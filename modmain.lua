@@ -143,7 +143,8 @@ if GetModConfigData("seedpouch_portable") then
     AddPrefabPostInit("seedpouch", seedpouch_fn)
 end
 
---参考能力勋章，修改容器界面，使便携袋子兼容融合布局
+----------------------------------------------HookUI----------------------------------------------
+--参考能力勋章，使issidewidget = true兼容融合布局设置
 AddClassPostConstruct(
     "screens/playerhud",
     function(self)
@@ -179,7 +180,7 @@ AddClassPostConstruct(
             if container == nil then
                 return
             end
-            --如果是便携袋子就把side参数设为false，让盒子正常关闭
+            --如果是便携袋子就把side参数设为false，让容器正常关闭
             if side and container:HasTag("portable_bag") then
                 side = false
             end
@@ -187,3 +188,56 @@ AddClassPostConstruct(
         end
     end
 )
+
+----------------------------------------------优先级----------------------------------------------
+--参考能力勋章(优先入盒)
+local function inventory_fn(self)
+    local oldGiveItem = self.GiveItem
+    self.GiveItem = function(self, inst, slot, src_pos)
+        if inst.components.inventoryitem == nil or not inst:IsValid() then
+            print("Warning: Can't give item because it's not an inventory item.")
+            return
+        end
+
+        --没有目标格子，才需找到格子
+        if not slot then
+            local portable_bag_name = nil
+
+            if candybag_item_fn(nil, inst, nil) then
+                portable_bag_name = "candybag"
+            elseif GetModConfigData("seedpouch_portable") and seedpouch_item_fn(nil, inst, nil) then
+                portable_bag_name = "seedpouch"
+            end
+
+            --符合某个模组容器条件，才找模组容器
+            if portable_bag_name then
+                if inst.components.inventoryitem.owner and inst.components.inventoryitem.owner ~= self.inst then
+                    inst.components.inventoryitem:RemoveFromOwner(true)
+                end
+
+                local objectDestroyed = inst.components.inventoryitem:OnPickup(self.inst, src_pos)
+                if objectDestroyed then
+                    return
+                end
+
+                --找到容器
+                local portable_bag =
+                    self:FindItem(
+                    function(item)
+                        return item.prefab == portable_bag_name and item.components.container and
+                            item.components.container:IsOpen()
+                    end
+                )
+
+                local portable_bag_container = portable_bag and portable_bag.components.container
+                if portable_bag_container and portable_bag_container:GiveItem(inst, nil, src_pos) then
+                    return true
+                end
+            end
+        end
+
+        return oldGiveItem and oldGiveItem(self, inst, slot, src_pos)
+    end
+end
+
+AddComponentPostInit("inventory", inventory_fn)
